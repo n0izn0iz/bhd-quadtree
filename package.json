@@ -1,0 +1,11 @@
+{
+  "name": "td-quadtree",
+  "version": "0.0.0",
+  "main": "QuadTree.js",
+  "license": "MIT",
+  "dependencies": {
+    "gl-matrix": "^2.4.0",
+    "td-aabb": "file:../td-aabb",
+    "td-direction": "file:../td-direction"
+  }
+}
