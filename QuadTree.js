@@ -64,8 +64,9 @@ export default class QuadTree {
 
   moveEntity(entity, newPosition) {
     const newAABB = new AABB({ position: newPosition, size: entity.size });
-    if (!this.root.containsAABB(newAABB)) return;
+    if (!this.root.containsAABB(newAABB)) return false;
     this.reinsert(entity, newPosition);
+    return true;
   }
 
   ensureEntitiesIsDefined() {
