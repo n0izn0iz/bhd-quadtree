@@ -20,6 +20,7 @@ export default class QuadTree {
     const containingChildIndex = this.containingChildIndex(entity.aABB);
     if (containingChildIndex === QuadTree.INDEX_NOT_FOUND) {
       this.push(entity);
+      entity.parent = this;
     } else {
       this.ensureChildIsDefined(containingChildIndex);
       this.childs[containingChildIndex].insert(entity);
@@ -37,13 +38,44 @@ export default class QuadTree {
     }, QuadTree.INDEX_NOT_FOUND);
   }
 
+  clean() {
+    if (this.isRoot || this.hasEntities || this.hasChilds) return;
+    const { parent } = this;
+    const index = parent.childs.indexOf(this);
+    if (index === QuadTree.INDEX_NOT_FOUND) throw new Error();
+    delete parent.childs[index];
+    parent.clean();
+  }
+
+  detachEntity(entity) {
+    this.assertHasEntity(entity, this.moveEntity);
+    const index = this.entities.indexOf(entity);
+    const detachedEntity = this.entities[index];
+    delete this.entities[index];
+    this.clean();
+  }
+
+  reinsert(entity, newPosition) {
+    const root = this.root;
+    this.detachEntity(entity);
+    entity.position = newPosition;
+    root.insert(entity);
+  }
+
+  moveEntity(entity, newPosition) {
+    const newAABB = new AABB({ position: newPosition, size: entity.size });
+    if (!this.root.containsAABB(newAABB)) return;
+    this.reinsert(entity, newPosition);
+  }
+
   ensureEntitiesIsDefined() {
-    if (!this.hasEntities)
+    if (!this.hasEntities && !this.entities)
       Object.defineProperty(this, "entities", { value: [] });
   }
 
   ensureChildIsDefined(childIndex) {
-    if (this.isLeaf) Object.defineProperty(this, "childs", { value: [] });
+    if (this.isLeaf && !this.childs)
+      Object.defineProperty(this, "childs", { value: [] });
     if (!this.hasChild(childIndex))
       this.childs[childIndex] = new QuadTree(this);
   }
@@ -58,17 +90,25 @@ export default class QuadTree {
     this.entities.push(entity);
   }
 
-  branchOnly() {
-    if (this.isLeaf) throw new QuadTree.BranchFunctionOnLeaf(this.directionOf);
+  branchOnly(func) {
+    if (this.isLeaf) throw new QuadTree.BranchFunctionOnLeaf(func);
+  }
+
+  assertHasEntity(entity, func) {
+    if (
+      !this.hasEntities ||
+      this.entities.indexOf(entity) === QuadTree.INDEX_NOT_FOUND
+    )
+      throw new QuadTree.EntityNotFound(this, entity, func);
   }
 
   directionOf(child) {
-    this.branchOnly();
+    this.branchOnly(this.directionOf);
     return this.childs.indexOf(child);
   }
 
   positionOf(child) {
-    this.branchOnly();
+    this.branchOnly(this.positionOf);
     return this.aABB.quartant(this.directionOf(child)).position;
   }
 
@@ -112,24 +152,36 @@ export default class QuadTree {
   }
 
   get hasEntities() {
-    return this.hasOwnProperty("entities");
+    return (
+      this.hasOwnProperty("entities") && Object.keys(this.entities).length > 0
+    );
   }
 
   get hasChilds() {
-    return this.hasOwnProperty("childs");
+    return this.hasOwnProperty("childs") && Object.keys(this.childs).length > 0;
+  }
+
+  get root() {
+    let node = this;
+    while (!node.isRoot) node = node.parent;
+    return node;
   }
 
   static get INDEX_NOT_FOUND() {
     return -1;
   }
 
+  static cutFuncName(func) {
+    return func.toString().split(" ")[0];
+  }
+
   static get BranchFunctionOnLeaf() {
     return class BranchFunctionOnLeaf extends Error {
       constructor(func) {
         super(
-          `Tried to execute the function ${func
-            .toString()
-            .split(" ")[0]} on a leaf node`
+          `Tried to execute the function ${QuadTree.cutFuncName(
+            func
+          )} on a leaf node`
         );
       }
     };
@@ -139,6 +191,18 @@ export default class QuadTree {
     return class OutOfBoundInsert extends Error {
       constructor(node, entity) {
         super(`Tried to insert out-of-bound entity ${entity} in ${node}`);
+      }
+    };
+  }
+
+  static get EntityNotFound() {
+    return class EntityNotFound extends Error {
+      constructor(node, entity, func) {
+        super(
+          `Tried to execute ${QuadTree.cutFuncName(
+            func
+          )} on ${node} which does not contain entity ${entity}`
+        );
       }
     };
   }
