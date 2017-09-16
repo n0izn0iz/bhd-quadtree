@@ -22,9 +22,10 @@ export default class QuadTree {
       this.ensureEntitiesIsDefined();
       this.entities.push(entity);
       entity.parent = this;
+      return true;
     } else {
       this.ensureChildIsDefined(containingChildIndex);
-      this.childs[containingChildIndex].insert(entity);
+      return this.childs[containingChildIndex].insert(entity);
     }
   }
 
