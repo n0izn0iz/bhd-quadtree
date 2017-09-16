@@ -77,11 +77,16 @@ export default class QuadTree {
       Object.defineProperty(this, "entities", { value: [] });
   }
 
-  ensureChildIsDefined(childIndex) {
+  ensureChildsIsDefined() {
     if (this.isLeaf && !this.childs)
       Object.defineProperty(this, "childs", { value: [] });
-    if (!this.hasChild(childIndex))
+  }
+
+  ensureChildIsDefined(childIndex) {
+    if (!this.hasChild(childIndex)) {
+      this.ensureChildsIsDefined();
       this.childs[childIndex] = new QuadTree(this);
+    }
   }
 
   forEach(func) {
