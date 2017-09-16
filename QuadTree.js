@@ -31,8 +31,8 @@ export default class QuadTree {
 
   containingChildIndex(aABB) {
     return directions.reduce((index, direction, directionIndex) => {
-      const quartant = this.aABB.quartant(directionIndex);
-      if (index === QuadTree.INDEX_NOT_FOUND && quartant.containsAABB(aABB)) {
+      const quadrant = this.aABB.quadrant(directionIndex);
+      if (index === QuadTree.INDEX_NOT_FOUND && quadrant.containsAABB(aABB)) {
         return directionIndex;
       } else {
         return index;
@@ -107,7 +107,7 @@ export default class QuadTree {
 
   positionOf(child) {
     this.branchOnly(this.positionOf);
-    return this.aABB.quartant(this.directionOf(child)).position;
+    return this.aABB.quadrant(this.directionOf(child)).position;
   }
 
   containsAABB(aABB) {
