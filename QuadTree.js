@@ -53,6 +53,7 @@ export default class QuadTree {
     this.assertHasEntity(entity, this.moveEntity);
     const index = this.entities.indexOf(entity);
     const detachedEntity = this.entities[index];
+    this.entities[index].parent = null;
     delete this.entities[index];
     this.clean();
   }
