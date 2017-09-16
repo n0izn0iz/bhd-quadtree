@@ -19,7 +19,8 @@ export default class QuadTree {
       throw new QuadTree.OutOfBoundInsert(this, entity);
     const containingChildIndex = this.containingChildIndex(entity.aABB);
     if (containingChildIndex === QuadTree.INDEX_NOT_FOUND) {
-      this.push(entity);
+      this.ensureEntitiesIsDefined();
+      this.entities.push(entity);
       entity.parent = this;
     } else {
       this.ensureChildIsDefined(containingChildIndex);
@@ -84,11 +85,6 @@ export default class QuadTree {
   forEach(func) {
     func(this);
     if (this.hasChilds) this.childs.forEach(child => child.forEach(func));
-  }
-
-  push(entity) {
-    this.ensureEntitiesIsDefined();
-    this.entities.push(entity);
   }
 
   branchOnly(func) {
