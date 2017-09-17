@@ -41,11 +41,19 @@ export default class QuadTree {
 
   collideAABB(aABB, ignored) {
     if (!this.containsAABB(aABB)) return false;
-    return this.reduceEntities((result, ownEntity) => {
-      if (result === true) return result;
-      if (ownEntity === ignored) return false;
-      return ownEntity.aABB.collideAABB(aABB);
-    }, false);
+    const containingChildIndex = this.containingChildIndex(aABB);
+    if (
+      containingChildIndex !== QuadTree.INDEX_NOT_FOUND &&
+      this.hasChild(containingChildIndex)
+    ) {
+      return this.childs[containingChildIndex].collideAABB(aABB, ignored);
+    } else {
+      return this.reduceEntities((result, ownEntity) => {
+        if (result === true) return result;
+        if (ownEntity === ignored) return false;
+        return ownEntity.aABB.collideAABB(aABB);
+      }, false);
+    }
   }
 
   collide(entity) {
