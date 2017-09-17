@@ -5,12 +5,12 @@ import AABB from "td-aabb";
 import Direction, { directions } from "td-direction";
 
 export default class QuadTree {
-  constructor(parent = null) {
+  constructor(parent = null, direction) {
     if (parent !== null) {
       this.parent = parent;
+      this.aABB = this.parent.aABB.quadrant(direction);
     } else {
-      this.rootSize = 64;
-      this.rootPosition = vec2.create();
+      this.aABB = new AABB({ position: vec2.create(), size: 64 });
     }
   }
 
@@ -108,7 +108,7 @@ export default class QuadTree {
   ensureChildIsDefined(childIndex) {
     if (!this.hasChild(childIndex)) {
       this.ensureChildsIsDefined();
-      this.childs[childIndex] = new QuadTree(this);
+      this.childs[childIndex] = new QuadTree(this, childIndex);
     }
   }
 
@@ -134,11 +134,6 @@ export default class QuadTree {
     return this.childs.indexOf(child);
   }
 
-  positionOf(child) {
-    this.branchOnly(this.positionOf);
-    return this.aABB.quadrant(this.directionOf(child)).position;
-  }
-
   containsAABB(aABB) {
     return this.aABB.containsAABB(aABB);
   }
@@ -155,7 +150,7 @@ export default class QuadTree {
   }
 
   get size() {
-    return this.isRoot ? this.rootSize : this.parent.size / 2;
+    return this.aABB.size;
   }
 
   get depth() {
@@ -163,7 +158,7 @@ export default class QuadTree {
   }
 
   get position() {
-    return this.isRoot ? this.rootPosition : this.parent.positionOf(this);
+    return this.aABB.position;
   }
 
   get isLeaf() {
@@ -172,10 +167,6 @@ export default class QuadTree {
 
   get isRoot() {
     return !this.hasOwnProperty("parent");
-  }
-
-  get aABB() {
-    return new AABB({ position: this.position, size: this.size });
   }
 
   get hasEntities() {
