@@ -39,6 +39,13 @@ export default class QuadTree {
     return result;
   }
 
+  someEntities(callback) {
+    if (this.hasEntities && this.entities.some(callback)) return true;
+    return this.hasChilds
+      ? this.childs.some(node => node.someEntities(callback))
+      : false;
+  }
+
   collideAABB(aABB, ignored) {
     if (!this.containsAABB(aABB)) return false;
     const containingChildIndex = this.containingChildIndex(aABB);
@@ -48,11 +55,10 @@ export default class QuadTree {
     ) {
       return this.childs[containingChildIndex].collideAABB(aABB, ignored);
     } else {
-      return this.reduceEntities((result, ownEntity) => {
-        if (result === true) return result;
-        if (ownEntity === ignored) return false;
-        return ownEntity.aABB.collideAABB(aABB);
-      }, false);
+      return this.someEntities(
+        ownEntity =>
+          ownEntity === ignored ? false : ownEntity.aABB.collideAABB(aABB)
+      );
     }
   }
 
